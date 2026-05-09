@@ -1,0 +1,10 @@
+import React,{useEffect,useState}from'react';import{supabase}from'../lib/supabase.js';import{requireAuth,getUser}from'../lib/auth.js';import*as S from'../styles.js';
+export default function Sign(){
+  const id=window.location.pathname.split('/')[2];
+  const[ag,setAg]=useState(null);const[signed,setSigned]=useState(false);
+  useEffect(()=>{requireAuth(window.location.href);supabase.from('agreements').select('*').eq('id',id).single().then(({data})=>setAg(data));},[id]);
+  const sign=async()=>{const u=getUser();if(!u)return;await supabase.from('agreement_parties').upsert({agreement_id:id,user_id:u.sub,signed:true,signed_at:new Date().toISOString()},{onConflict:'agreement_id,user_id'});setSigned(true);};
+  if(signed)return React.createElement('div',{style:S.page},React.createElement('div',{style:{...S.card,textAlign:'center',padding:'3rem'}},React.createElement('div',{style:{fontSize:'3rem'}},'✅'),React.createElement('h2',{style:{...S.h2,marginTop:'1rem'}},'Agreement Signed'),React.createElement('button',{style:{...S.btn,marginTop:'1rem'},onClick:()=>window.location.href='/agreement/'+id},'View Agreement')));
+  if(!ag)return React.createElement('div',{style:S.page},React.createElement('p',{style:S.muted},'Loading...'));
+  return React.createElement('div',{style:S.page},React.createElement('h1',{style:S.h1},'Sign Agreement'),React.createElement('div',{style:S.card},React.createElement('h2',{style:S.h2},ag.title),React.createElement('p',{style:{...S.muted,whiteSpace:'pre-wrap',lineHeight:1.8,maxHeight:'400px',overflowY:'auto'}},ag.terms)),React.createElement('div',{style:{...S.card,borderColor:'#7c3aed'}},React.createElement('p',{style:{color:'#a78bfa',marginBottom:'1rem'}},'By clicking Sign, you agree to the terms above.'),React.createElement('button',{style:S.btn,onClick:sign},'✍ Sign Agreement')));
+}
